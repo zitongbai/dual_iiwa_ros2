@@ -27,7 +27,7 @@ endif()
 # Install
 ################################################################################
 install(
-  DIRECTORY config gazebo rviz
+  DIRECTORY config gazebo rviz moveit2 srdf
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -75,7 +75,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             'use_planning',
-            default_value='false',
+            default_value='true',
             description='Start robot with Moveit2 `move_group` planning \
                          config for Pilz and OMPL.',
         )
@@ -249,9 +249,9 @@ def generate_launch_description():
     # Running with Moveit2 planning
     iiwa_planning_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
-            FindPackageShare('iiwa_bringup'),
+            FindPackageShare('dual_iiwa_bringup'),
             '/launch',
-            '/iiwa_planning.launch.py'
+            '/dual_iiwa_planning.launch.py'
         ]),
         launch_arguments={
             'description_package': description_package,
@@ -268,7 +268,7 @@ def generate_launch_description():
     # Running with Moveit2 servoing
     iiwa_servoing_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
-            FindPackageShare('iiwa_bringup'),
+            FindPackageShare('dual_iiwa_bringup'),
             '/launch',
             '/iiwa_servoing.launch.py'
         ]),
