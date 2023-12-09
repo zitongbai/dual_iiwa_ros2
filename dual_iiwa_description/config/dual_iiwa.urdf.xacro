@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!-- Two Kuka iiwa 7DoF manipulator -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="dual_iiwa">
+
+    <!-- Enable setting arguments from the launch file -->
+    <xacro:arg name="use_sim" default="false" />
+    <xacro:arg name="use_fake_hardware" default="true" />
+    <xacro:arg name="command_interface" default="position" />
+    <xacro:arg name="base_frame_file" default="base_frame.yaml" />
+    <xacro:arg name="description_package" default="iiwa_description" />
+    <xacro:arg name="runtime_config_package" default="dual_iiwa_description" />
+    <xacro:arg name="controllers_file" default="iiwa_controllers.yaml" />
+    <xacro:arg name="namespace" default="" />
+
+    <xacro:arg name="left_initial_positions_file" default="left_initial_positions.yaml" />
+    <xacro:arg name="right_initial_positions_file" default="right_initial_positions.yaml" />
+
+    <!-- For real robot -->
+    <xacro:arg name="left_robot_ip" default="192.170.10.1" />
+    <xacro:arg name="left_robot_port" default="30200" />
+    <xacro:arg name="right_robot_ip" default="192.170.10.2" />
+    <xacro:arg name="right_robot_port" default="30200" />
+    
+    <!-- property -->
+    <xacro:property name="description_package" value="$(arg description_package)"/>
+    <xacro:property name="runtime_config_package" value="$(arg runtime_config_package)"/>
+    <xacro:property name="base_frame_file" value="$(arg base_frame_file)"/>
+    <xacro:property name="left_base_frame" value="${xacro.load_yaml(base_frame_file)['left_base_frame']}"/>
+    <xacro:property name="right_base_frame" value="${xacro.load_yaml(base_frame_file)['right_base_frame']}"/>
+    <xacro:property name="controllers_file" value="$(arg controllers_file)"/>
+    <xacro:property name="namespace" value="$(arg namespace)"/>
+
+    <!-- Import iiwa urdf file -->
+    <xacro:include filename="$(find ${description_package})/urdf/iiwa.urdf.xacro" />
+    <!-- Import iiwa ros2_control description -->
+    <xacro:include filename="$(find ${description_package})/ros2_control/iiwa.r2c_hardware.xacro" />
+    <!-- Import all Gazebo-customization elements -->
+    <xacro:include filename="$(find ${runtime_config_package})/gazebo/iiwa.gazebo.xacro"/>
+
+    <!-- Used for fixing robot -->
+    <link name="world"/>
+    <gazebo reference="world">
+        <static>true</static>
+    </gazebo>
+
+    <!-- left iiwa -->
+    <xacro:iiwa parent="world" prefix="left_">
+        <origin xyz="${left_base_frame['x']} ${left_base_frame['y']} ${left_base_frame['z']}"
+            rpy="${left_base_frame['roll']} ${left_base_frame['pitch']} ${left_base_frame['yaw']}" />
+    </xacro:iiwa>
+    <xacro:iiwa_r2c_hardware
+        name="iiwaRobotLeft" prefix="left_"
+        robot_ip="$(arg left_robot_ip)" robot_port="$(arg left_robot_port)"
+        command_interface="$(arg command_interface)"
+        initial_positions_file="$(arg left_initial_positions_file)"
+        use_sim="$(arg use_sim)" use_fake_hardware="$(arg use_fake_hardware)"
+        />
+    <xacro:iiwa_gazebo prefix="left_"/>
+    <!-- right iiwa -->
+    <xacro:iiwa parent="world" prefix="right_">
+        <origin xyz="${right_base_frame['x']} ${right_base_frame['y']} ${right_base_frame['z']}"
+            rpy="${right_base_frame['roll']} ${right_base_frame['pitch']} ${right_base_frame['yaw']}" />
+    </xacro:iiwa>
+    <xacro:iiwa_r2c_hardware
+        name="iiwaRobotRight" prefix="right_"
+        robot_ip="$(arg right_robot_ip)" robot_port="$(arg right_robot_port)"
+        command_interface="$(arg command_interface)"
+        initial_positions_file="$(arg right_initial_positions_file)"
+        use_sim="$(arg use_sim)" use_fake_hardware="$(arg use_fake_hardware)"
+        />
+    <xacro:iiwa_gazebo prefix="right_"/>
+    <!-- gazebo -->
+    <gazebo>
+      <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+        <xacro:if value="${namespace != '/'}">
+          <ros>
+            <namespace>/${namespace[:-1]}</namespace>
+          </ros>
+          <robot_param_node>/${namespace}robot_state_publisher</robot_param_node>
+        </xacro:if>
+        <parameters>$(find ${runtime_config_package})/config/${controllers_file}</parameters>
+      </plugin>
+    </gazebo>
+
+</robot>
